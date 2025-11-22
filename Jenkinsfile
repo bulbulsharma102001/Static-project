@@ -26,11 +26,21 @@ pipeline {
                 """
             }
         }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo "Applying Kubernetes manifests..."
+                powershell """
+                    kubectl apply -f k8s.yaml
+                """
+            }
+        }
     }
 
     post {
         success {
             echo "Website running at: http://localhost:9090"
+            echo "Kubernetes deployment applied successfully."
         }
     }
 }
