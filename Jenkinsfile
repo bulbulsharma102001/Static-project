@@ -1,7 +1,13 @@
 pipeline {
     agent any
 
+    environment {
+        KUBECONFIG = "C:\\ProgramData\\Jenkins\\.kube\\config"
+        PATH = "C:\\Program Files\\Kubernetes\\;${env.PATH}"
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
                 echo 'Pulling website code...'
@@ -31,7 +37,11 @@ pipeline {
             steps {
                 echo "Applying Kubernetes manifests..."
                 powershell """
-                    kubectl apply -f k8s.yaml
+                    echo "Checking Kubernetes cluster access..."
+                    kubectl get nodes
+
+                    echo "Deploying to Minikube..."
+                    kubectl apply --validate=false -f "${WORKSPACE}\\k8s.yaml"
                 """
             }
         }
