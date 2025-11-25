@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = credentials('bbsharma102001')     // Jenkins Credential ID
-        DOCKERHUB_PASS = credentials('Dockerhub@123')     // Jenkins Credential ID
-        IMAGE = "bulbulsharma102001/static-website:latest"      // Your Docker Image
-        YAML_FILE = "k8s.yaml"
+        DOCKERHUB_USER = credentials('bbsharma102001')     // Jenkins Credentials
+        DOCKERHUB_PASS = credentials('Dockerhub@123')
+        IMAGE = "bulbulsharma102001/static-website:latest"
+        YAML_PATH = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\Static-Dockerhub-Img\\k8s.yaml"
     }
 
     stages {
@@ -18,38 +18,38 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${IMAGE} ."
-                }
+                powershell """
+                docker build -t ${env.IMAGE} .
+                """
             }
         }
 
         stage('Login to DockerHub') {
             steps {
-                script {
-                    sh "echo ${DOCKERHUB_PASS} | docker login -u ${DOCKERHUB_USER} --password-stdin"
-                }
+                powershell """
+                echo ${env.DOCKERHUB_PASS} | docker login -u ${env.DOCKERHUB_USER} --password-stdin
+                """
             }
         }
 
-        stage('Push Image to DockerHub') {
+        stage('Push Docker Image') {
             steps {
-                script {
-                    sh "docker push ${IMAGE}"
-                }
+                powershell """
+                docker push ${env.IMAGE}
+                """
             }
         }
 
-        stage('Deploy to Kubernetes (Minikube)') {
+        stage('Deploy to Kubernetes') {
             steps {
                 powershell """
                 echo "Checking Kubernetes Access..."
                 kubectl get nodes
 
-                echo "Deploying to Minikube..."
-                kubectl apply --validate=false -f "${WORKSPACE}\\${YAML_FILE}"
+                echo "Applying Kubernetes YAML..."
+                kubectl apply --validate=false -f "${env.YAML_PATH}"
 
-                echo "Deployment Status:"
+                echo "Deployment Status..."
                 kubectl get pods
                 kubectl get svc
                 """
