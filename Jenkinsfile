@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = credentials('bbsharma102001')     // Jenkins Credentials
-        DOCKERHUB_PASS = credentials('Dockerhub@123')
+        DOCKERHUB_USER = credentials('dockerhub-username')   // Jenkins Credential ID
+        DOCKERHUB_PASS = credentials('dockerhub-password')   // Jenkins Credential ID
         IMAGE = "bulbulsharma102001/static-website:latest"
-        YAML_PATH = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\Static-Dockerhub-Img\\k8s.yaml"
+        YAML_PATH = "${WORKSPACE}\\k8s.yaml"
     }
 
     stages {
@@ -43,13 +43,13 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 powershell """
-                echo "Checking Kubernetes Access..."
+                echo "Checking Kubernetes access..."
                 kubectl get nodes
 
-                echo "Applying Kubernetes YAML..."
+                echo "Deploying application..."
                 kubectl apply --validate=false -f "${env.YAML_PATH}"
 
-                echo "Deployment Status..."
+                echo "Deployment status:"
                 kubectl get pods
                 kubectl get svc
                 """
