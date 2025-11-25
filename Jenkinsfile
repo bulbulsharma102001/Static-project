@@ -2,55 +2,58 @@ pipeline {
     agent any
 
     environment {
-        KUBECONFIG = "C:\\ProgramData\\Jenkins\\.kube\\config"
-        PATH = "C:\\Program Files\\Kubernetes\\;${env.PATH}"
+        DOCKERHUB_USER = credentials('dockerhub-username')     // Jenkins Credential ID
+        DOCKERHUB_PASS = credentials('dockerhub-password')     // Jenkins Credential ID
+        IMAGE = "bulbulsharma102001/static-website:latest"      // Your Docker Image
+        YAML_FILE = "k8s.yaml"
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                echo 'Pulling website code...'
                 git branch: 'main', url: 'https://github.com/bulbulsharma102001/Static-project.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                powershell """
-                    docker build -t static-website:latest .
-                """
+                script {
+                    sh "docker build -t ${IMAGE} ."
+                }
             }
         }
 
-        stage('Run Container') {
+        stage('Login to DockerHub') {
+            steps {
+                script {
+                    sh "echo ${DOCKERHUB_PASS} | docker login -u ${DOCKERHUB_USER} --password-stdin"
+                }
+            }
+        }
+
+        stage('Push Image to DockerHub') {
+            steps {
+                script {
+                    sh "docker push ${IMAGE}"
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes (Minikube)') {
             steps {
                 powershell """
-                    docker stop static-web 2>\$null
-                    docker rm static-web 2>\$null
-                    docker run -d --name static-web -p 9090:80 static-website:latest
+                echo "Checking Kubernetes Access..."
+                kubectl get nodes
+
+                echo "Deploying to Minikube..."
+                kubectl apply --validate=false -f "${WORKSPACE}\\${YAML_FILE}"
+
+                echo "Deployment Status:"
+                kubectl get pods
+                kubectl get svc
                 """
             }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                echo "Applying Kubernetes manifests..."
-                powershell """
-                    echo "Checking Kubernetes cluster access..."
-                    kubectl get nodes
-
-                    echo "Deploying to Minikube..."
-                    kubectl apply --validate=false -f "${WORKSPACE}\\k8s.yaml"
-                """
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "Website running at: http://localhost:9090"
-            echo "Kubernetes deployment applied successfully."
         }
     }
 }
