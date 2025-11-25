@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = credentials('dockerhub-username')   // Jenkins Credential ID
-        DOCKERHUB_PASS = credentials('dockerhub-password')   // Jenkins Credential ID
+        DOCKERHUB_USER = credentials('bbsharma102001')   // Jenkins Credential ID
+        DOCKERHUB_PASS = credentials('Dockerhub@123')   // Jenkins Credential ID
         IMAGE = "bulbulsharma102001/static-website:latest"
         YAML_PATH = "${WORKSPACE}\\k8s.yaml"
     }
